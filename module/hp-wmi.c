@@ -9,7 +9,10 @@
  * Copyright (C) 2005 Miloslav Trmac <mitr@volny.cz>
  * Copyright (C) 2005 Bernhard Rosenkraenzer <bero@arklinux.org>
  * Copyright (C) 2005 Dmitry Torokhov <dtor@mail.ru>
- */
+ *
+ * Portions based on alienware-wmi.c:
+ * Copyright (C) 2014 Dell Inc <mario_limonciello@dell.com>
+*/
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 

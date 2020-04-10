@@ -1,6 +1,6 @@
 ifneq ($(KERNELRELEASE),)
 # kbuild part of makefile
-obj-m := hp-wmi-53.o
+obj-m := hp-wmi.o
 
 else
 # normal makefile
@@ -11,7 +11,7 @@ default:
 
 # Module specific targets
 genbin:
-	echo "X" > hp-wmi-53_bin.o_shipped
+	echo "X" > hp-wmi_bin.o_shipped
 
 endif
 
