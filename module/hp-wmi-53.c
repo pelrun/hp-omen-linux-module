@@ -88,13 +88,6 @@ enum hp_wmi_commandtype {
 	HPWMI_FEATURE2_QUERY		= 0x0d,
 	HPWMI_WIRELESS2_QUERY		= 0x1b,
 	HPWMI_POSTCODEERROR_QUERY	= 0x2a,
-	HPWMI_FOURZONE_QUERY = 131081,
-};
-
-enum hp_wmi_command {
-	HPWMI_READ	= 0x01,
-	HPWMI_WRITE	= 0x02,
-	HPWMI_ODM	= 0x03,
 
 	HPWMI_FOURZONE_COLOR_GET = 2,
 	HPWMI_FOURZONE_COLOR_SET = 3,
@@ -102,6 +95,13 @@ enum hp_wmi_command {
 	HPWMI_FOURZONE_BRIGHT_SET = 5,
 	HPWMI_FOURZONE_ANIM_GET = 6,
 	HPWMI_FOURZONE_ANIM_SET = 7,
+};
+
+enum hp_wmi_command {
+	HPWMI_READ	= 0x01,
+	HPWMI_WRITE	= 0x02,
+	HPWMI_ODM	= 0x03,
+	HPWMI_FOURZONE = 131081,
 };
 
 enum hp_wmi_hardware_mask {
@@ -118,7 +118,11 @@ enum hp_return_value {
 	HPWMI_RET_WRONG_SIGNATURE	= 0x02,
 	HPWMI_RET_UNKNOWN_COMMAND	= 0x03,
 	HPWMI_RET_UNKNOWN_CMDTYPE	= 0x04,
-	HPWMI_RET_INVALID_PARAMETERS	= 0x05,
+	HPWMI_RET_INPUT_SIZE_NULL	= 0x05,
+	HPWMI_RET_INPUT_DATA_NULL = 0x06,
+	HPWMI_RET_INPUT_DATA_INVALID = 0x07,
+	HPWMI_RET_RETURN_SIZE_NULL	= 0x08,
+	HPWMI_RET_RETURN_SIZE_INVALID = 0x09,
 };
 
 enum hp_wireless2_bits {
@@ -955,26 +959,51 @@ static int fourzone_update_led(struct platform_zone *zone)
 {
 	u8 state[128];
 
-	int ret = hp_wmi_perform_query(HPWMI_FOURZONE_COLOR_GET, HPWMI_FOURZONE_QUERY, &state,
+	int ret = hp_wmi_perform_query(HPWMI_FOURZONE_COLOR_GET, HPWMI_FOURZONE, &state,
 		sizeof(state), sizeof(state));
 
-	if (!ret) goto error;
+	if (ret) goto error;
 
 	// Zones start at offset 25. Wonder what's in the rest of the buffer?
 	state[zone->offset + 0] = zone->colors.red;
 	state[zone->offset + 1] = zone->colors.green;
 	state[zone->offset + 2] = zone->colors.blue;
 
-	ret = hp_wmi_perform_query(HPWMI_FOURZONE_QUERY, HPWMI_FOURZONE_COLOR_SET, &state,
+	ret = hp_wmi_perform_query(HPWMI_FOURZONE_COLOR_SET, HPWMI_FOURZONE, &state,
 		sizeof(state), sizeof(state));
 
+	if (!ret) return 0;
+
 error:
+	pr_warn("fourzone returned error 0x%x\n", ret);
 	return ret <= 0 ? ret : -EINVAL;
 }
 
 static ssize_t zone_show(struct device *dev, struct device_attribute *attr,
 			 char *buf)
 {
+	/*
+	u8 state[128];
+	int i;
+
+	int ret = hp_wmi_perform_query(HPWMI_FOURZONE_ANIM_GET, HPWMI_FOURZONE, &state,
+		sizeof(state), sizeof(state));
+
+	if (ret)
+	{
+		pr_warn("fourzone returned error 0x%x\n", ret);
+		return 0;
+	}
+
+	for (i=0; i<128; i++)
+	{
+		sprintf(buf+i*2,"%02x",state[i]);
+	}
+
+	return 257;
+*/
+
+
 	struct platform_zone *target_zone;
 	target_zone = match_zone(attr);
 	if (target_zone == NULL)
