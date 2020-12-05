@@ -26,8 +26,10 @@ To use these, just write the hex colour in the RGB format as 0xRRGGBB. e.g.:
 
 ### To do:
 
-- FourZone brightness control 
-- Fan control
-- Performance level
-- Network booster (?)
+___FourZone brightness control___ not necessary as brightness is managed from hex values
+- GUI
+- Fan control 
+- Performance level 
+- Network booster (?) 
+- DKMS module
 
