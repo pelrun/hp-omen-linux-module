@@ -26,7 +26,7 @@ To use these, just write the hex colour in the RGB format as 0xRRGGBB. e.g.:
 
 ### To do:
 
-___FourZone brightness control___ not necessary as brightness is managed from hex values
+~~FourZone brightness control~~ not necessary as brightness is managed from hex values
 - GUI
 - Fan control 
 - Performance level 
