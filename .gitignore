@@ -1,7 +1,7 @@
 *.ko
 *.o
 *.a
-.*
+module/.*
 *.mod
 *.mod.c
 *.mod.o
