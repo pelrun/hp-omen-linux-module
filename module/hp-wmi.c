@@ -172,6 +172,7 @@ static const struct key_entry hp_wmi_keymap[] = {
 	{ KE_KEY, 0x2169, { KEY_ROTATE_DISPLAY } },
 	{ KE_KEY, 0x216a, { KEY_SETUP } },
 	{ KE_KEY, 0x231b, { KEY_HELP } },
+	{ KE_KEY, HPWMI_OMEN_KEY_PRESSED, { KEY_CALC } },
 	{ KE_END, 0 }
 };
 
@@ -644,6 +645,12 @@ static void hp_wmi_notify(u32 value, void *context)
 	case HPWMI_BATTERY_CHARGE_PERIOD:
 		break;
 	case HPWMI_OMEN_KEY_PRESSED:
+		pr_info("Omen key pressed");
+		if (!sparse_keymap_report_event(hp_wmi_input_dev,
+						HPWMI_OMEN_KEY_PRESSED, KEY_CALC, true))
+			pr_err("Could not send KEY_CALC");
+		break;
+
 		break;
 	default:
 		pr_info("Unknown event_id - %d - 0x%x\n", event_id, event_data);
