@@ -9,9 +9,27 @@ Currently working:
 
 FourZone keyboard colour control (/sys/devices/platforms/hp-wmi/rgb-zones)
 
-To do:
+## Installation
+Run ```make``` inside the module folder.
+Require the kernel headers to be installed in order to run.
 
-FourZone brightness control
-Fan control
-Performance level
-Network booster (?)
+Then run
+```# rmmod hp-wmi```
+```# insmod hp-wmi.ko```
+
+The FourZone interface is now up and running
+
+### Usage
+The module creates four zones in `/sys/devices/platform/hp-wmi/rgb_zones/` as zoneXX between 00 and 03. 
+To use these, just write the hex colour in the RGB format as 0xRRGGBB. e.g.:
+`echo 0x00FFFF > /sys/devices/platform/hp-wmi/rgb_zones/zone00` to get sky-blue
+
+### To do:
+
+~~FourZone brightness control~~ not necessary as brightness is managed from hex values
+- GUI
+- Fan control 
+- Performance level 
+- Network booster (?) 
+- DKMS module
+
