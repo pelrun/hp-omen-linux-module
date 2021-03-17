@@ -1,3 +1,4 @@
+# CFLAGS_hp-wmi.o := -DDEBUG
 ifneq ($(KERNELRELEASE),)
 # kbuild part of makefile
 obj-m := hp-wmi.o
