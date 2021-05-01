@@ -68,6 +68,7 @@ enum hp_wmi_event_ids {
 	HPWMI_BACKLIT_KB_BRIGHTNESS	= 0x0D,
 	HPWMI_PEAKSHIFT_PERIOD		= 0x0F,
 	HPWMI_BATTERY_CHARGE_PERIOD	= 0x10,
+    HPWMI_OMEN_KEY_PRESSED      = 0x1D
 };
 
 struct bios_args {
@@ -171,6 +172,7 @@ static const struct key_entry hp_wmi_keymap[] = {
 	{ KE_KEY, 0x2169, { KEY_ROTATE_DISPLAY } },
 	{ KE_KEY, 0x216a, { KEY_SETUP } },
 	{ KE_KEY, 0x231b, { KEY_HELP } },
+	//{ KE_KEY, HPWMI_OMEN_KEY_PRESSED, { KEY_CALC } },  //TODO: bind this key to some custom keycode
 	{ KE_END, 0 }
 };
 
@@ -642,6 +644,12 @@ static void hp_wmi_notify(u32 value, void *context)
 		break;
 	case HPWMI_BATTERY_CHARGE_PERIOD:
 		break;
+/*	case HPWMI_OMEN_KEY_PRESSED:
+		pr_info("Omen key pressed");
+		if (!sparse_keymap_report_event(hp_wmi_input_dev,
+						HPWMI_OMEN_KEY_PRESSED, KEY_CALC, true))  //TODO: Bind Omen key to some custom keycode
+			pr_err("Could not send KEY_CALC");
+		break; */
 	default:
 		pr_info("Unknown event_id - %d - 0x%x\n", event_id, event_data);
 		break;
@@ -935,7 +943,7 @@ static int parse_rgb(const char *buf, struct platform_zone *zone)
 		return -EINVAL;
 
 	repackager.package = rgb;
-	pr_debug("hp-wmi: r: %d g:%d b: %d\n",
+	pr_debug("hp-wmi: r:%d g:%d b:%d\n",
 		 repackager.cp.red, repackager.cp.green, repackager.cp.blue);
 	zone->colors = repackager.cp;
 	return 0;
@@ -958,59 +966,54 @@ static struct platform_zone *match_zone(struct device_attribute *attr)
 /*
  * Individual RGB zone control
  */
-static int fourzone_update_led(struct platform_zone *zone)
+static int fourzone_update_led(struct platform_zone *zone, enum hp_wmi_command read_or_write)
 {
 	u8 state[128];
 
 	int ret = hp_wmi_perform_query(HPWMI_FOURZONE_COLOR_GET, HPWMI_FOURZONE, &state,
 		sizeof(state), sizeof(state));
 
-	if (ret) goto error;
+	if (ret) {
+        pr_warn("fourzone_color_get returned error 0x%x\n", ret);
+        return ret <= 0 ? ret : -EINVAL;
+    }
 
-	// Zones start at offset 25. Wonder what's in the rest of the buffer?
-	state[zone->offset + 0] = zone->colors.red;
-	state[zone->offset + 1] = zone->colors.green;
-	state[zone->offset + 2] = zone->colors.blue;
+    if (read_or_write == HPWMI_WRITE) {
+        // Zones start at offset 25. Wonder what's in the rest of the buffer?
+        state[zone->offset + 0] = zone->colors.red;
+        state[zone->offset + 1] = zone->colors.green;
+        state[zone->offset + 2] = zone->colors.blue;
 
-	ret = hp_wmi_perform_query(HPWMI_FOURZONE_COLOR_SET, HPWMI_FOURZONE, &state,
-		sizeof(state), sizeof(state));
+        ret = hp_wmi_perform_query(HPWMI_FOURZONE_COLOR_SET, HPWMI_FOURZONE, &state,
+                sizeof(state), sizeof(state));
 
-	if (!ret) return 0;
+        if (ret) 
+            pr_warn("fourzone_color_set returned error 0x%x\n", ret);
+        return ret;
 
-error:
-	pr_warn("fourzone returned error 0x%x\n", ret);
-	return ret <= 0 ? ret : -EINVAL;
+    } else {
+        zone->colors.red = state[zone->offset + 0];
+        zone->colors.green = state[zone->offset + 1];
+        zone->colors.blue = state[zone->offset + 2];
+    }
+    return 0;
 }
 
 static ssize_t zone_show(struct device *dev, struct device_attribute *attr,
 			 char *buf)
 {
-	/*
-	u8 state[128];
-	int i;
-
-	int ret = hp_wmi_perform_query(HPWMI_FOURZONE_ANIM_GET, HPWMI_FOURZONE, &state,
-		sizeof(state), sizeof(state));
-
-	if (ret)
-	{
-		pr_warn("fourzone returned error 0x%x\n", ret);
-		return 0;
-	}
-
-	for (i=0; i<128; i++)
-	{
-		sprintf(buf+i*2,"%02x",state[i]);
-	}
-
-	return 257;
-*/
-
-
 	struct platform_zone *target_zone;
+    int ret;
+
 	target_zone = match_zone(attr);
 	if (target_zone == NULL)
 		return sprintf(buf, "red: -1, green: -1, blue: -1\n");
+
+    ret = fourzone_update_led(target_zone, HPWMI_READ);
+
+    if (ret)
+		return sprintf(buf, "red: -1, green: -1, blue: -1\n");
+    
 	return sprintf(buf, "red: %d, green: %d, blue: %d\n",
 		       target_zone->colors.red,
 		       target_zone->colors.green, target_zone->colors.blue);
@@ -1030,7 +1033,7 @@ static ssize_t zone_set(struct device *dev, struct device_attribute *attr,
 	ret = parse_rgb(buf, target_zone);
 	if (ret)
 		return ret;
-	ret = fourzone_update_led(target_zone);
+	ret = fourzone_update_led(target_zone, HPWMI_WRITE);
 	return ret ? ret : count;
 }
 
