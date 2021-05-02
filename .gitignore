@@ -1,6 +1,7 @@
 *.ko
 *.o
-.*
+*.a
+module/.*
 *.mod
 *.mod.c
 *.mod.o
@@ -8,3 +9,4 @@ modules.order
 Module.symvers
 omen_cs/*
 app
+iasl
