@@ -68,7 +68,7 @@ enum hp_wmi_event_ids {
   HPWMI_BACKLIT_KB_BRIGHTNESS	= 0x0D,
   HPWMI_PEAKSHIFT_PERIOD		= 0x0F,
   HPWMI_BATTERY_CHARGE_PERIOD	= 0x10,
-    HPWMI_OMEN_KEY_PRESSED      = 0x1D
+  HPWMI_OMEN_KEY      = 0x1D
 };
 
 struct bios_args {
@@ -172,7 +172,10 @@ static const struct key_entry hp_wmi_keymap[] = {
   { KE_KEY, 0x2169, { KEY_ROTATE_DISPLAY } },
   { KE_KEY, 0x216a, { KEY_SETUP } },
   { KE_KEY, 0x231b, { KEY_HELP } },
-  //{ KE_KEY, HPWMI_OMEN_KEY_PRESSED, { KEY_CALC } },  //TODO: bind this key to some custom keycode
+  //{ KE_KEY, 0x21A4, { KEY_F23 } }, // Winlock hotkey
+  //{ KE_KEY, 0x21A5, { KEY_F23 } }, // Omen key
+  //{ KE_KEY, 0x21A7, { KEY_F24 } }, // ???
+  //{ KE_KEY, 0x21A9, { KEY_F24 } }, // Disable touchpad hotkey
   { KE_END, 0 }
 };
 
@@ -548,38 +551,46 @@ static void hp_wmi_notify(u32 value, void *context)
   int key_code;
 
   status = wmi_get_event_data(value, &response);
-  if (status != AE_OK) {
-    pr_info("bad event status 0x%x\n", status);
+  if (status == AE_NOT_FOUND)
+  {
+    // We've been woken up without any event data
+    // Some models do this when the Omen hotkey is pressed
+    event_id = HPWMI_OMEN_KEY;
+  }
+  else if (status != AE_OK) {
+    pr_info("bad event value 0x%x status 0x%x\n", value, status);
     return;
   }
+  else
+  {
+    obj = (union acpi_object *)response.pointer;
 
-  obj = (union acpi_object *)response.pointer;
+    if (!obj)
+      return;
+    if (obj->type != ACPI_TYPE_BUFFER) {
+      pr_info("Unknown response received %d\n", obj->type);
+      kfree(obj);
+      return;
+    }
 
-  if (!obj)
-    return;
-  if (obj->type != ACPI_TYPE_BUFFER) {
-    pr_info("Unknown response received %d\n", obj->type);
+    /*
+    * Depending on ACPI version the concatenation of id and event data
+    * inside _WED function will result in a 8 or 16 byte buffer.
+    */
+    location = (u32 *)obj->buffer.pointer;
+    if (obj->buffer.length == 8) {
+      event_id = *location;
+      event_data = *(location + 1);
+    } else if (obj->buffer.length == 16) {
+      event_id = *location;
+      event_data = *(location + 2);
+    } else {
+      pr_info("Unknown buffer length %d\n", obj->buffer.length);
+      kfree(obj);
+      return;
+    }
     kfree(obj);
-    return;
   }
-
-  /*
-   * Depending on ACPI version the concatenation of id and event data
-   * inside _WED function will result in a 8 or 16 byte buffer.
-   */
-  location = (u32 *)obj->buffer.pointer;
-  if (obj->buffer.length == 8) {
-    event_id = *location;
-    event_data = *(location + 1);
-  } else if (obj->buffer.length == 16) {
-    event_id = *location;
-    event_data = *(location + 2);
-  } else {
-    pr_info("Unknown buffer length %d\n", obj->buffer.length);
-    kfree(obj);
-    return;
-  }
-  kfree(obj);
 
   switch (event_id) {
   case HPWMI_DOCK_EVENT:
@@ -596,6 +607,7 @@ static void hp_wmi_notify(u32 value, void *context)
   case HPWMI_SMART_ADAPTER:
     break;
   case HPWMI_BEZEL_BUTTON:
+  case HPWMI_OMEN_KEY:
     key_code = hp_wmi_read_int(HPWMI_HOTKEY_QUERY);
     if (key_code < 0)
       break;
@@ -644,12 +656,6 @@ static void hp_wmi_notify(u32 value, void *context)
     break;
   case HPWMI_BATTERY_CHARGE_PERIOD:
     break;
-/*	case HPWMI_OMEN_KEY_PRESSED:
-    pr_info("Omen key pressed");
-    if (!sparse_keymap_report_event(hp_wmi_input_dev,
-            HPWMI_OMEN_KEY_PRESSED, KEY_CALC, true))  //TODO: Bind Omen key to some custom keycode
-      pr_err("Could not send KEY_CALC");
-    break; */
   default:
     pr_info("Unknown event_id - %d - 0x%x\n", event_id, event_data);
     break;
