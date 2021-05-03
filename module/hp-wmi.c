@@ -162,6 +162,9 @@ struct bios_rfkill2_state {
   struct bios_rfkill2_device_state device[HPWMI_MAX_RFKILL2_DEVICES];
 };
 
+// Set if the keycode is a key release
+#define HPWMI_HOTKEY_RELEASE_FLAG (1<<16)
+
 static const struct key_entry hp_wmi_keymap[] = {
   { KE_KEY, 0x02,   { KEY_BRIGHTNESSUP } },
   { KE_KEY, 0x03,   { KEY_BRIGHTNESSDOWN } },
@@ -609,7 +612,9 @@ static void hp_wmi_notify(u32 value, void *context)
   case HPWMI_BEZEL_BUTTON:
   case HPWMI_OMEN_KEY:
     key_code = hp_wmi_read_int(HPWMI_HOTKEY_QUERY);
-    if (key_code < 0)
+    // Some hotkeys generate both press and release events
+    // Just drop the release events.
+    if (key_code < 0 || (key_code && HPWMI_HOTKEY_RELEASE_FLAG))
       break;
 
     if (!sparse_keymap_report_event(hp_wmi_input_dev,
