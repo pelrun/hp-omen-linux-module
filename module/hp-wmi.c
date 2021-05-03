@@ -172,10 +172,10 @@ static const struct key_entry hp_wmi_keymap[] = {
   { KE_KEY, 0x2169, { KEY_ROTATE_DISPLAY } },
   { KE_KEY, 0x216a, { KEY_SETUP } },
   { KE_KEY, 0x231b, { KEY_HELP } },
-  //{ KE_KEY, 0x21A4, { KEY_F23 } }, // Winlock hotkey
-  //{ KE_KEY, 0x21A5, { KEY_F23 } }, // Omen key
-  //{ KE_KEY, 0x21A7, { KEY_F24 } }, // ???
-  //{ KE_KEY, 0x21A9, { KEY_F24 } }, // Disable touchpad hotkey
+  { KE_KEY, 0x21A4, { KEY_F14 } }, // Winlock hotkey
+  { KE_KEY, 0x21A5, { KEY_F15 } }, // Omen key
+  { KE_KEY, 0x21A7, { KEY_F16 } }, // ???
+  { KE_KEY, 0x21A9, { KEY_F17 } }, // Disable touchpad hotkey
   { KE_END, 0 }
 };
 
