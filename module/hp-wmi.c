@@ -614,7 +614,7 @@ static void hp_wmi_notify(u32 value, void *context)
     key_code = hp_wmi_read_int(HPWMI_HOTKEY_QUERY);
     // Some hotkeys generate both press and release events
     // Just drop the release events.
-    if (key_code < 0 || (key_code && HPWMI_HOTKEY_RELEASE_FLAG))
+    if (key_code < 0 || (key_code & HPWMI_HOTKEY_RELEASE_FLAG))
       break;
 
     if (!sparse_keymap_report_event(hp_wmi_input_dev,
