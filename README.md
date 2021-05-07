@@ -10,21 +10,15 @@ It's totally experimental right now, and could easily crash your machine.
 Currently working:
 
 - FourZone keyboard colour control (`/sys/devices/platforms/hp-wmi/rgb-zones/zone0[0-3]`)
-- Omen key calls calculator
+- Omen hotkeys
 
 ## Installation
 
-1. Install kernel development kit.
+1. Install dkms and kernel headers if needed (already present on Ubuntu)
 
-1. Run `make` inside the module folder.
+1. Run `sudo make install`
 
-1. Then run as root
-   ```
-   rmmod hp-wmi
-   insmod hp-wmi.ko
-   ```
-
-The FourZone interface is now up and running
+Module will be built and installed, and DKMS will manage rebuilding it on kernel updates.
 
 ## Usage
 
@@ -34,13 +28,10 @@ To change zone highlight color, just print hex colour value in RGB format to the
 
 `sudo bash -c 'echo 00FFFF > /sys/devices/platform/hp-wmi/rgb_zones/zone00'` to get sky-blue zone 0.
 
+Omen and other hotkeys are bound to regular X11 keysyms, use your chosen desktop's hotkey manager to assign them to functions like any other key.
+
 ## To do:
 
-- [x] ~~FourZone brightness control~~ not necessary as brightness is managed from hex values
-- [ ] Fix bug when pressing calculator key produces hundreds of `XF86Calculator` keyboard events
-- [ ] Better utilization of Omen key
-- [ ] DKMS module
+- [ ] FourZone brightness control
 - [ ] Fan control 
-- [ ] Performance level 
-- [ ] Network booster (?) 
 
