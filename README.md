@@ -9,7 +9,7 @@ It's totally experimental right now, and could easily crash your machine.
 
 Currently working:
 
-- FourZone keyboard colour control (`/sys/devices/platforms/hp-wmi/rgb-zones/zone0[0-3]`)
+- FourZone keyboard colour control (`/sys/devices/platform/hp-wmi/rgb-zones/zone0[0-3]`)
 - Omen hotkeys
 
 ## Installation
