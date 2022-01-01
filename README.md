@@ -16,9 +16,11 @@ Currently working:
 
 1. Install dkms and kernel headers if needed (already present on Ubuntu)
 
-1. Run `sudo make install`
+2. Run `sudo make install`
 
 Module will be built and installed, and DKMS will manage rebuilding it on kernel updates.
+
+WARNING: You might need to reboot your system first.
 
 ## Usage
 
